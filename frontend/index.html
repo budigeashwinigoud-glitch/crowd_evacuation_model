@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f2f6fc">
+  <title>Crowd Evacuation Modeling &amp; Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="page-shell">
+
+    <!-- Header -->
+    <header class="topbar">
+      <div class="header-copy">
+        
+        <h1>Crowd Evacuation Modeling &amp; Simulation</h1>
+        <p>Emergency evacuation analysis using numerical methods</p>
+      </div>
+
+      <div class="header-status">
+        <span class="status-dot"></span>
+        <span>Simulation Dashboard</span>
+      </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard">
+
+      <!-- Simulation Setup -->
+      <section class="panel controls-panel">
+        <div class="section-header">
+          <div>
+            <p class="section-kicker">Configuration</p>
+            <h2>Simulation Setup</h2>
+          </div>
+        </div>
+
+        <p class="section-description">
+          Configure the evacuation scenario and numerical method.
+        </p>
+
+        <div class="form-grid">
+          <label for="scenarioSelect">
+            Scenario
+            <select id="scenarioSelect">
+              <option value="normal">Normal Evacuation</option>
+              <option value="high_crowd">High Crowd</option>
+              <option value="blocked_exit">Blocked Exit</option>
+              <option value="three_exits">Three Exits</option>
+              <option value="exit_locations">Different Exit Locations</option>
+              <option value="euler_vs_rk4">Euler vs RK4</option>
+            </select>
+          </label>
+
+          <label for="populationInput">
+            Population
+            <input id="populationInput" type="number" min="1" max="1000" step="1" value="100">
+            <small>Number of people in the building</small>
+          </label>
+
+          <label for="methodSelect">
+            Numerical Method
+            <select id="methodSelect">
+              <option value="euler">Euler</option>
+              <option value="rk4">RK4</option>
+            </select>
+            <small id="methodHint">Choose a numerical method.</small>
+          </label>
+        </div>
+
+        <button id="runSimulationBtn" class="primary-btn" type="button">
+          ▶ Run Simulation
+        </button>
+
+        <div id="statusBox" class="status-box" data-type="ready" role="status" aria-live="polite">
+          Ready to run
+        </div>
+
+        <p id="scenarioDescription" class="scenario-description">
+          Baseline evacuation across a two-exit building.
+        </p>
+      </section>
+
+      <!-- Simulation Results -->
+      <section class="panel result-panel">
+        <div class="section-header">
+          <div>
+            <p class="section-kicker">Live Analysis</p>
+            <h2>Simulation Summary</h2>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-topline">
+              <span class="metric-icon">👥</span>
+              <span>Total People</span>
+            </div>
+            <strong id="totalPeople">-</strong>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-topline">
+              <span class="metric-icon">✓</span>
+              <span>Evacuated</span>
+            </div>
+            <strong id="evacuatedPeople">-</strong>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-topline">
+              <span class="metric-icon">⏱</span>
+              <span>Evacuation Time</span>
+            </div>
+            <strong id="evacuationTime">-</strong>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-topline">
+              <span class="metric-icon">↗</span>
+              <span>Average Speed</span>
+            </div>
+            <strong id="averageSpeed">-</strong>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-topline">
+              <span class="metric-icon">◉</span>
+              <span>Maximum Density</span>
+            </div>
+            <strong id="maximumDensity">-</strong>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-topline">
+              <span class="metric-icon">≈</span>
+              <span>Average Density</span>
+            </div>
+            <strong id="averageDensity">-</strong>
+          </div>
+        </div>
+
+        <div class="progress-block">
+          <div class="progress-header">
+            <span>Evacuation Progress</span>
+            <strong id="progressValue">0.0%</strong>
+          </div>
+
+          <div class="progress-track" role="progressbar" aria-label="Evacuation progress" aria-valuemin="0"
+            aria-valuemax="100">
+            <div id="progressBar" class="progress-fill"></div>
+          </div>
+
+          <p id="progressText" class="progress-text">
+            0 / 0 people evacuated
+          </p>
+        </div>
+      </section>
+
+      <!-- Live Evacuation Simulation -->
+      <section class="panel wide-panel live-panel">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">Visualization</p>
+            <h2>Live Evacuation Simulation</h2>
+          </div>
+        </div>
+
+        <div class="live-controls">
+          <div class="live-button-group">
+            <button id="startAnimationBtn" class="live-btn primary-live" type="button">
+              ▶ Start
+            </button>
+
+            <button id="pauseAnimationBtn" class="live-btn" type="button">
+              ⏸ Pause
+            </button>
+
+            <button id="restartAnimationBtn" class="live-btn" type="button">
+              ↻ Restart
+            </button>
+          </div>
+
+          <div class="speed-controls">
+            <label for="speedControl">Animation Speed</label>
+            <select id="speedControl">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="4">4x</option>
+            </select>
+          </div>
+
+          <label class="toggle-row">
+            <input id="densityToggle" type="checkbox">
+            <span>Show density</span>
+          </label>
+        </div>
+
+        <div class="live-metrics-grid">
+          <div class="metric-tile">
+            <span>Simulation Time</span>
+            <strong id="liveSimulationTime">0.00 s</strong>
+          </div>
+
+          <div class="metric-tile">
+            <span>Total People</span>
+            <strong id="liveTotalPeople">0</strong>
+          </div>
+
+          <div class="metric-tile">
+            <span>Evacuated</span>
+            <strong id="liveEvacuatedPeople">0</strong>
+          </div>
+
+          <div class="metric-tile">
+            <span>Remaining</span>
+            <strong id="liveRemainingPeople">0</strong>
+          </div>
+
+          <div class="metric-tile">
+            <span>Maximum Density</span>
+            <strong id="liveMaxDensity">0.00</strong>
+          </div>
+
+          <div class="metric-tile">
+            <span>Average Speed</span>
+            <strong id="liveAverageSpeed">0.00 m/s</strong>
+          </div>
+        </div>
+
+        <div class="live-progress-wrap">
+          <div class="live-progress-header">
+            <span>
+              Evacuated:
+              <strong id="liveProgressText">0 / 0</strong>
+            </span>
+            <strong id="liveProgressValue">0.0%</strong>
+          </div>
+
+          <div class="progress-track">
+            <div id="liveProgressBar" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="simulation-canvas-wrap">
+          <canvas id="liveSimulationCanvas" width="920" height="480" aria-label="Live crowd evacuation animation">
+            Your browser does not support canvas.
+          </canvas>
+        </div>
+      </section>
+
+      <!-- Evacuation Chart -->
+      <section class="panel wide-panel chart-panel">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">Progress</p>
+            <h2>Evacuation Progress Chart</h2>
+          </div>
+        </div>
+
+        <p class="chart-meta">
+          Number of evacuated people over simulation time
+        </p>
+
+        <svg id="evacuationChart" viewBox="0 0 700 260" preserveAspectRatio="xMidYMid meet" role="img"
+          aria-label="Evacuated people over time"></svg>
+
+        <div id="chartSummary" class="chart-summary">
+          Run a simulation to view progress.
+        </div>
+      </section>
+
+      <!-- Crowd Density Map -->
+      <section class="panel heatmap-panel">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">Density Analysis</p>
+            <h2>Crowd Density Map</h2>
+          </div>
+        </div>
+
+        <p class="chart-meta">
+          Spatial distribution of people during evacuation
+        </p>
+
+        <canvas id="densityCanvas" width="700" height="260" aria-label="Crowd density heatmap"></canvas>
+
+        <div class="density-legend">
+          <span>Low density</span>
+          <div class="legend-bar"></div>
+          <span>High density</span>
+        </div>
+      </section>
+
+      <!-- Evacuation Environment -->
+      <section class="panel environment-panel">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">Environment</p>
+            <h2>Evacuation Environment</h2>
+          </div>
+        </div>
+
+        <svg id="environmentScene" viewBox="0 0 600 280" class="environment-scene" preserveAspectRatio="xMidYMid meet"
+          role="img" aria-label="Building layout, obstacles and exits"></svg>
+
+        <div class="legend-inline">
+          <span><i class="legend-dot person"></i> Person</span>
+          <span><i class="legend-dot obstacle"></i> Obstacle</span>
+          <span><i class="legend-dot exit"></i> Exit</span>
+        </div>
+      </section>
+
+      <!-- Exit Utilization: Full-width layout fix -->
+      <section class="panel exit-utilization-panel">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">Distribution</p>
+            <h2>Exit Utilization</h2>
+          </div>
+        </div>
+
+        <p class="chart-meta">
+          Percentage of evacuated people using each available exit
+        </p>
+
+        <div id="exitUsageList" class="exit-usage-list">
+          Run a simulation to view exit utilization.
+        </div>
+      </section>
+
+      <!-- Euler vs RK4 Comparison -->
+      <section id="comparisonPanel" class="panel comparison-panel hidden">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">Comparison</p>
+            <h2>Numerical Method Comparison</h2>
+          </div>
+        </div>
+
+        <div class="comparison-table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Euler</th>
+                <th>RK4</th>
+              </tr>
+            </thead>
+
+            <tbody id="comparisonTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Mathematical Model -->
+      <section class="panel wide-panel info-panel">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">Model</p>
+            <h2>Mathematical Model</h2>
+          </div>
+        </div>
+
+        <div class="equation-grid">
+          <article class="equation-card">
+            <h3>Differential Equations</h3>
+            <p>dx/dt = v<sub>x</sub>, dy/dt = v<sub>y</sub></p>
+            <small>Position changes according to velocity.</small>
+          </article>
+
+          <article class="equation-card">
+            <h3>Distance</h3>
+            <p>
+              d = √((x<sub>e</sub> − x)² + (y<sub>e</sub> − y)²)
+            </p>
+            <small>People move toward an available exit.</small>
+          </article>
+
+          <article class="equation-card">
+            <h3>Crowd Density</h3>
+            <p>ρ = N / A</p>
+            <small>People per unit area.</small>
+          </article>
+
+          <article class="equation-card">
+            <h3>Density-Dependent Speed</h3>
+            <p>
+              v(ρ) = v<sub>0</sub>(1 − ρ / ρ<sub>max</sub>)
+            </p>
+            <small>Movement speed decreases as density rises.</small>
+          </article>
+
+          <article class="equation-card">
+            <h3>Euler Method</h3>
+            <p>
+              x<sub>n+1</sub> = x<sub>n</sub> + Δt · v<sub>x</sub>
+            </p>
+            <p>
+              y<sub>n+1</sub> = y<sub>n</sub> + Δt · v<sub>y</sub>
+            </p>
+          </article>
+
+          <article class="equation-card">
+            <h3>RK4 Method</h3>
+            <p>Uses four intermediate slope estimates.</p>
+            <small>A higher-order numerical integration method.</small>
+          </article>
+        </div>
+      </section>
+
+      <!-- About the Project -->
+      <section class="panel wide-panel info-panel">
+        <div class="section-header compact">
+          <div>
+            <p class="section-kicker">About</p>
+            <h2>About This Simulation</h2>
+          </div>
+        </div>
+
+        <div class="about-grid">
+          <article class="about-card">
+            <h3>Objective</h3>
+            <p>
+              Model emergency crowd evacuation using differential equations,
+              crowd-density effects and numerical methods.
+            </p>
+          </article>
+
+          <article class="about-card">
+            <h3>Numerical Methods</h3>
+            <p>
+              Euler integration, RK4 integration, distance calculations
+              and density-dependent movement.
+            </p>
+          </article>
+
+          <article class="about-card">
+            <h3>Technology</h3>
+            <p>
+              Python, Flask, NumPy, HTML, CSS and JavaScript.
+            </p>
+          </article>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="project-footer">
+      <div>
+        <strong>Crowd Evacuation Modeling &amp; Simulation</strong>
+        <p>Computational Mathematics Lab Project</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
