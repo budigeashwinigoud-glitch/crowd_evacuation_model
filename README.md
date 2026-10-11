@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Crowd Evacuation Modeling and Simulation Using Python
 
 ## 1. Project Title
@@ -156,3 +157,6 @@ This is a simplified mathematical model and does not represent every real-world 
 
 ## 14. Academic Note
 This project keeps the mathematical engine as the core implementation, while the Flask and frontend layers act as a prototype interface for demonstration in a local VS Code environment.
+=======
+# crowd_evacuation_model
+>>>>>>> e75bfa2cc7fbc2cb1157975622ccffaa1b210775
